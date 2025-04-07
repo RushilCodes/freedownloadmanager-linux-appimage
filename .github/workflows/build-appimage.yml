@@ -1,0 +1,40 @@
+name: Build & Release FDM AppImage
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          git wget dpkg dpkg-dev imagemagick \
+          sed coreutils file desktop-file-utils \
+          binutils
+
+    - name: Download latest pkg2appimage
+      run: |
+        LATEST_PKG2APPIMAGE=$(wget -q https://github.com/AppImage/pkg2appimage/releases -O - | grep "pkg2appimage-.*-x86_64.AppImage" | head -n 1 | cut -d '"' -f 2)
+        wget -c https://github.com/$LATEST_PKG2APPIMAGE -O pkg2appimage.AppImage
+        chmod +x pkg2appimage.AppImage
+
+    - name: Build AppImage
+      run: |
+        ./pkg2appimage.AppImage recipes/freedownloadmanager.yml
+
+    - name: Upload AppImage to GitHub Release
+      uses: softprops/action-gh-release@v2
+      with:
+        files: out/*.AppImage
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
