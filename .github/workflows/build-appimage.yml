@@ -1,7 +1,6 @@
 name: Build & Release FDM AppImage
 
 on:
-  workflow_dispatch:
   push:
     tags:
       - "v*"
